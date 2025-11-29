@@ -1,13 +1,12 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import MapPage from './pages/MapPage';
 
 function App() {
     return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<MapPage />} />
-            </Routes>
-        </Router>
+        <Routes>
+            <Route path="/map" element={<MapPage />} />
+            <Route path="/" element={<Navigate to="/map" replace />} />
+        </Routes>
     );
 }
 
