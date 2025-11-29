@@ -10,7 +10,7 @@ const crops = [
   { id: 'corn', name: { en: 'Corn (Maize)', hi: 'मक्का', or: 'ମକା' } }
 ];
 
-export const CropCalendar = ({ language }) => {
+export const CropCalendar = ({ language, embedded = false }) => {
   const t = translations[language];
   const [selectedCrop, setSelectedCrop] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -155,18 +155,20 @@ export const CropCalendar = ({ language }) => {
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
-      <div className="mb-4">
-        <h2 className="text-3xl font-bold text-emerald-900 flex items-center gap-3">
-          <CalendarDays className="text-emerald-600" size={36} />
-          {t.calendarHeader}
-        </h2>
-        <p className="text-slate-500 mt-2 text-lg max-w-2xl">
-          {t.calendarSub}
-        </p>
-      </div>
+    <div className={`space-y-6 h-full flex flex-col ${embedded ? 'py-2' : ''}`}>
+      {!embedded && (
+        <div className="mb-4">
+          <h2 className="text-3xl font-bold text-emerald-900 flex items-center gap-3">
+            <CalendarDays className="text-emerald-600" size={36} />
+            {t.calendarHeader}
+          </h2>
+          <p className="text-slate-500 mt-2 text-lg max-w-2xl">
+            {t.calendarSub}
+          </p>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
+      <div className={`grid grid-cols-1 ${embedded ? 'xl:grid-cols-3' : 'lg:grid-cols-3'} gap-8 flex-1`}>
         
         {/* Left Panel: Configuration & Weather Context */}
         <div className="lg:col-span-1 space-y-6">

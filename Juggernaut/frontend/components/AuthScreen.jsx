@@ -1,54 +1,99 @@
 import React, { useState } from 'react';
-import { Shield, ArrowRight, Phone, ArrowLeft, Mail, Lock, User as UserIcon } from 'lucide-react';
+import { Shield, ArrowRight, Phone, ArrowLeft, Mail, Lock, User as UserIcon, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { translations } from '../translations';
 
 export const AuthScreen = ({ onLogin, onBack, language, setLanguage }) => {
   const t = translations[language];
-  const [authMode, setAuthMode] = useState('signin');
-  const [inputMethod, setInputMethod] = useState('phone');
+  const [authMode, setAuthMode] = useState('signin'); // 'signin' or 'signup'
+  const [inputMethod, setInputMethod] = useState('phone'); // 'phone' or 'email'
   
+  // Form Data
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e) => {
+  // --- API HANDLER ---
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg('');
     
-    // Basic validation
-    if (authMode === 'signup' && !name) return;
-    if (inputMethod === 'phone' && !mobile) return;
-    if (inputMethod === 'email' && !email) return;
-    if (!password) return; // Mock password check
+    // 1. Basic Client-Side Validation
+    if (authMode === 'signup' && !name) return setErrorMsg("Name is required");
+    if (inputMethod === 'phone' && !mobile) return setErrorMsg("Phone number is required");
+    if (inputMethod === 'email' && !email) return setErrorMsg("Email is required");
+    if (!password) return setErrorMsg("Password is required");
     
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      const mockUser = {
-        name: name || (inputMethod === 'phone' ? 'Farmer John' : email.split('@')[0]),
-        email: inputMethod === 'email' ? email : 'farmer@agrisentry.com' // Mock mapping
+
+    // Prepare Data for Backend
+    const endpoint = authMode === 'signup' ? '/signup' : '/login';
+    const apiUrl = `http://localhost:5000/api/auth${endpoint}`;
+    
+    let payload = {};
+
+    if (authMode === 'signup') {
+      payload = {
+        name,
+        password,
+        // Send ONLY the selected method, leave other as undefined
+        email: inputMethod === 'email' ? email : undefined,
+        phone: inputMethod === 'phone' ? mobile : undefined
       };
-      onLogin(mockUser);
-    }, 1500);
+    } else {
+      // Login Mode
+      payload = {
+        identifier: inputMethod === 'email' ? email : mobile,
+        password
+      };
+    }
+
+    try {
+      // 2. Call Backend
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Authentication failed");
+      }
+
+      // 3. Success!
+      // Save token (Optional: use localStorage for persistence)
+      // localStorage.setItem('agri_token', data.token);
+      
+      onLogin(data); // Pass the real user data to App.jsx
+
+    } catch (err) {
+      console.error("Auth Error:", err);
+      setErrorMsg(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleMethod = () => {
     setInputMethod(prev => prev === 'phone' ? 'email' : 'phone');
-    // Clear inputs on switch for cleanliness
     setMobile('');
     setEmail('');
+    setErrorMsg('');
   };
 
   const toggleAuthMode = () => {
     setAuthMode(prev => prev === 'signin' ? 'signup' : 'signin');
-    // Reset fields
     setMobile('');
     setEmail('');
     setPassword('');
     setName('');
+    setErrorMsg('');
   };
 
   return (
@@ -103,6 +148,13 @@ export const AuthScreen = ({ onLogin, onBack, language, setLanguage }) => {
 
           <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
             
+            {/* Error Message Display */}
+            {errorMsg && (
+              <div className="bg-red-50 text-red-600 text-xs font-bold p-3 rounded-lg border border-red-100 text-center">
+                {errorMsg}
+              </div>
+            )}
+
             {/* Sign Up: Full Name */}
             <AnimatePresence>
               {authMode === 'signup' && (
@@ -193,11 +245,17 @@ export const AuthScreen = ({ onLogin, onBack, language, setLanguage }) => {
                 loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-slate-800'
               }`}
             >
-              {loading 
-                ? (authMode === 'signup' ? t.creatingAccount : t.verifying) 
-                : (authMode === 'signup' ? t.createAccount : t.secureLogin)
-              }
-              {!loading && <ArrowRight size={20} />}
+              {loading ? (
+                 <>
+                    <Loader2 size={20} className="animate-spin" />
+                    {authMode === 'signup' ? t.creatingAccount : t.verifying}
+                 </>
+              ) : (
+                 <>
+                    {authMode === 'signup' ? t.createAccount : t.secureLogin}
+                    <ArrowRight size={20} />
+                 </>
+              )}
             </button>
           </form>
 

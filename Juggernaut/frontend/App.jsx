@@ -1,27 +1,41 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
-import { Dashboard } from './components/Dashboard';
+import { Dashboard } from './components/Dashboard'; // Fixed import path
 import { VerifySupply } from './components/views/VerifySupply';
 import { FieldMonitor } from './components/views/FieldMonitor';
 import { FieldDoctor } from './components/views/FieldDoctor';
 import { CommunityMap } from './components/views/CommunityMap';
-import { CropCalendar } from './components/views/CropCalendar';
 import { SettingsView } from './components/views/SettingsView';
 import { AuthScreen } from './components/AuthScreen';
-import { LandingPage } from './components/LandingPage';
+import { LandingPage } from './components/views/LandingPage';
 import { ChatBot } from './components/ChatBot';
 import { BottomNav } from './components/BottomNav';
 import { OfflineBanner } from './components/OfflineBanner';
-import { ViewType } from './types'; // Assuming ViewType is defined as a constant/object in types.js
+import { ViewType } from './types'; 
 import { LogOut, Settings as SettingsIcon } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const App = () => {
-  // App Flow State: 'landing' -> 'login' (AuthScreen) -> 'dashboard'
-  const [showLanding, setShowLanding] = useState(true);
-  const [user, setUser] = useState(null);
+  // --- 1. STATE INITIALIZATION WITH LOCAL STORAGE ---
   
-  const [currentView, setCurrentView] = useState(ViewType.DASHBOARD);
+  // Check if user is already logged in
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('agri_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  // If user is logged in, don't show landing. If not, show landing.
+  const [showLanding, setShowLanding] = useState(() => {
+    const savedUser = localStorage.getItem('agri_user');
+    return !savedUser; 
+  });
+
+  // Remember the last view the user was on
+  const [currentView, setCurrentView] = useState(() => {
+    const savedView = localStorage.getItem('agri_view');
+    return savedView || ViewType.DASHBOARD;
+  });
+
   const [language, setLanguage] = useState('en');
 
   // Swipe Gesture State
@@ -33,10 +47,11 @@ const App = () => {
     ViewType.VERIFY,
     ViewType.MONITOR,
     ViewType.DIAGNOSE,
-    ViewType.CALENDAR,
     ViewType.MAP,
     ViewType.SETTINGS
   ];
+
+  // --- HANDLERS ---
 
   const handleEnterApp = () => {
     setShowLanding(false);
@@ -48,17 +63,25 @@ const App = () => {
 
   const handleViewChange = (view) => {
     setCurrentView(view);
+    // Save view to storage
+    localStorage.setItem('agri_view', view);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleLogin = (loggedInUser) => {
     setUser(loggedInUser);
+    setShowLanding(false);
+    // Save user to storage
+    localStorage.setItem('agri_user', JSON.stringify(loggedInUser));
   };
 
   const handleLogout = () => {
     setUser(null);
-    setShowLanding(true); // Return to landing page on logout
+    setShowLanding(true); 
     setCurrentView(ViewType.DASHBOARD);
+    // Clear storage
+    localStorage.removeItem('agri_user');
+    localStorage.removeItem('agri_view');
   };
 
   // Touch Handlers for Swipe
@@ -86,8 +109,10 @@ const App = () => {
     touchStartX.current = null;
   };
 
-  // 1. Landing Page
-  if (showLanding) {
+  // --- RENDER LOGIC ---
+
+  // 1. Landing Page (Only if no user and showLanding is true)
+  if (showLanding && !user) {
     return (
       <LandingPage 
         onEnter={handleEnterApp} 
@@ -97,7 +122,7 @@ const App = () => {
     );
   }
 
-  // 2. Login Screen (Auth)
+  // 2. Login Screen (Auth) (If no user but passed landing)
   if (!user) {
     return (
       <AuthScreen 
@@ -120,8 +145,6 @@ const App = () => {
         return <FieldMonitor language={language} />;
       case ViewType.DIAGNOSE:
         return <FieldDoctor language={language} />;
-      case ViewType.CALENDAR:
-        return <CropCalendar language={language} />;
       case ViewType.MAP:
         return <CommunityMap language={language} />;
       case ViewType.SETTINGS:

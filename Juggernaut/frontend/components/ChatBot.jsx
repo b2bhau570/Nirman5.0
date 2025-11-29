@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 import { MessageCircle, X, Send, Loader2, Bot, User as UserIcon, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { translations } from '../translations'; // Assuming you might need translations later, kept import style
 
 export const ChatBot = ({ language }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  // NOTE: Keeping the default state as 'false' so it appears as a floating button
+  const [isOpen, setIsOpen] = useState(false); 
   const [messages, setMessages] = useState([
     { id: 'welcome', role: 'model', text: 'Hello! I am your Agri-Sentry AI assistant. How can I help you with your crops today?' }
   ]);
@@ -23,7 +25,7 @@ export const ChatBot = ({ language }) => {
 
   const initializeChat = () => {
     if (!chatSessionRef.current) {
-      // Note: process.env.API_KEY needs to be available in your environment variables
+      // NOTE: Using a placeholder for API_KEY access, ensure this is handled correctly in your environment (.env.local)
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       chatSessionRef.current = ai.chats.create({
         model: 'gemini-3-pro-preview',
@@ -88,30 +90,40 @@ export const ChatBot = ({ language }) => {
     }
   };
 
+  // Calculate the offset needed to clear the bottom navigation bar (if it's 60px tall)
+  // We'll use a larger bottom margin for the button to lift it above the nav bar.
+  const bottomOffsetClass = 'bottom-[75px]'; // 75px should place it nicely above the bottom nav
+
   return (
     <>
-      {/* Floating Toggle Button */}
+      {/* Floating Toggle Button - POSITIONED IN THE BOTTOM-RIGHT CORNER */}
       <motion.button
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-50 p-4 rounded-full shadow-[0_0_30px_rgba(163,230,53,0.3)] transition-all duration-300 ${
+        // POSITION ADJUSTMENT: Using right-4 and a custom bottom offset to clear the bottom navigation bar.
+        className={`fixed ${bottomOffsetClass} right-4 md:bottom-6 md:right-6 z-50 p-3 md:p-4 rounded-full shadow-[0_0_30px_rgba(163,230,53,0.3)] transition-all duration-300 ${
           isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'bg-lime-400 text-emerald-950 hover:bg-lime-300'
         }`}
       >
-        <MessageCircle size={32} strokeWidth={2.5} />
+        <MessageCircle size={28} className='md:size-8' strokeWidth={2.5} />
       </motion.button>
 
-      {/* Chat Window */}
+      {/* Chat Window - POSITIONED IN THE BOTTOM-RIGHT CORNER */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-6 right-6 w-[90vw] md:w-[400px] h-[600px] max-h-[80vh] bg-slate-900/90 backdrop-blur-2xl rounded-[2rem] shadow-2xl flex flex-col overflow-hidden z-50 border border-white/10 font-sans"
+            // POSITION ADJUSTMENT: Fullscreen on mobile, floating in the bottom-right on desktop.
+            className={`fixed inset-0 md:inset-auto md:bottom-6 md:right-6 
+                        w-full h-full max-h-none 
+                        md:w-[400px] md:h-[600px] md:max-h-[80vh] 
+                        bg-slate-900/90 backdrop-blur-2xl rounded-none md:rounded-[2rem] shadow-2xl 
+                        flex flex-col overflow-hidden z-50 border border-white/10 font-sans`}
           >
             {/* Header */}
             <div className="p-4 bg-emerald-950/50 border-b border-white/5 flex justify-between items-center shrink-0 relative overflow-hidden">
@@ -150,7 +162,7 @@ export const ChatBot = ({ language }) => {
                     {msg.role === 'user' ? <UserIcon size={16} /> : <Sparkles size={16} />}
                   </div>
                   <div
-                    className={`max-w-[80%] p-3.5 rounded-2xl text-sm leading-relaxed ${
+                    className={`max-w-[80%] max-w-xs p-3.5 rounded-2xl text-sm leading-relaxed ${
                       msg.role === 'user'
                         ? 'bg-emerald-600 text-white rounded-br-none shadow-lg'
                         : 'bg-white/5 text-slate-200 border border-white/5 rounded-bl-none shadow-md backdrop-blur-sm'

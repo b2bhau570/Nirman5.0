@@ -1,8 +1,8 @@
 import React from 'react';
+import { ViewType } from '../types'; // User and Language types are removed as they don't exist in JS runtime
 import { LayoutDashboard, ShieldCheck, ScanEye, Stethoscope, Map, Shield, LogOut, CalendarDays, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { translations } from '../translations';
-import { ViewType } from '../types'; // Assuming ViewType is an object/enum available in JS as well
 
 export const Sidebar = ({ 
   currentView, 
@@ -19,7 +19,6 @@ export const Sidebar = ({
     { id: ViewType.VERIFY, label: t.verifySupply, icon: <ShieldCheck size={20} /> },
     { id: ViewType.MONITOR, label: t.monitorField, icon: <ScanEye size={20} /> },
     { id: ViewType.DIAGNOSE, label: t.diagnoseDisease, icon: <Stethoscope size={20} /> },
-    { id: ViewType.CALENDAR, label: t.smartCalendar, icon: <CalendarDays size={20} /> },
     { id: ViewType.MAP, label: t.communityMap, icon: <Map size={20} /> },
   ];
 
